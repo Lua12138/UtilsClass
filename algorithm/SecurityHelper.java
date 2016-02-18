@@ -3,8 +3,10 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.*;
-import java.security.spec.InvalidParameterSpecException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.zip.CRC32;
 
@@ -191,6 +193,7 @@ public class SecurityHelper {
 
     /**
      * base64编码
+     *
      * @param input 输入值
      * @return 结果
      */
@@ -200,10 +203,135 @@ public class SecurityHelper {
 
     /**
      * base64解码
+     *
      * @param input 输入值
      * @return 结果
      */
     public byte[] base64decode(byte[] input) {
         return Base64.getDecoder().decode(input);
+    }
+
+    /**
+     * AES相关操作类，有状态，且非线程安全类。<br>
+     * 使用方法：<br>
+     * <pre>
+     * SecurityHelper.AES aes = new SecurityHelper.AES();
+     * aes.setIV(IV);
+     * aes.setKey(KEY);
+     * aes.setCurrentMode(SecurityHelper.AES.AES128_CBC_PCKS5);
+     * aes.prepareEncrypt();  // decode to invoke <i>aes.prepareDecrypt();</i>
+     * aes.update(BLOCK_1);
+     * aes.update(BLOCK_2);
+     * aes.update(BLOCK_3);
+     * // ...ect.
+     * aes.doFinal(LAST_BLOCK);
+     *
+     * </pre>
+     */
+    public static class AES {
+        public final static String AES128_CBC_PCKS5 = "AES/CBC/PKCS5Padding";
+        public final static String AES128_CBC_NOPADDING = "AES/CBC/NoPadding";
+        public final static String AES128_ECB_NOPADDING = "AES/ECB/NoPadding";
+        public final static String AES128_ECB_PCKS5 = "AES/ECB/PKCS5Padding";
+
+
+        private Cipher cipher;
+        private IvParameterSpec ivParameterSpec;
+        private SecretKey secretKey;
+        private String currentMode; // 当前模式与填充方式
+        private int keySize; // 加密长度 默认128bit
+        private KeyGenerator keyGenerator;
+
+        public AES() {
+            this.keySize = 128;
+        }
+
+        /**
+         * 设置初始化向量
+         *
+         * @param iv
+         */
+        public void setIV(byte[] iv) {
+            this.ivParameterSpec = new IvParameterSpec(iv);
+        }
+
+        /**
+         * 设置密钥
+         *
+         * @param key
+         */
+        public void setKey(byte[] key) {
+            this.secretKey = new SecretKeySpec(key, "AES");
+        }
+
+        /**
+         * 设置加密长度，默认128位
+         *
+         * @param keySize
+         */
+        @Deprecated
+        public void setKeySize(int keySize) {
+            this.keySize = keySize;
+        }
+
+        /**
+         * 设置当前的加密模式与填充方式
+         *
+         * @param currentMode
+         */
+        public void setCurrentMode(String currentMode) throws NoSuchPaddingException, NoSuchAlgorithmException {
+            this.currentMode = currentMode;
+            this.cipher = Cipher.getInstance(this.currentMode);
+        }
+
+        /**
+         * 准备编码
+         *
+         * @throws InvalidAlgorithmParameterException
+         * @throws InvalidKeyException
+         */
+        public void prepareEncrypt() throws InvalidAlgorithmParameterException, InvalidKeyException {
+            this.cipher.init(Cipher.ENCRYPT_MODE, this.secretKey, this.ivParameterSpec);
+        }
+
+        /**
+         * 准备解码
+         *
+         * @throws InvalidAlgorithmParameterException
+         * @throws InvalidKeyException
+         */
+        public void prepareDecrypt() throws InvalidAlgorithmParameterException, InvalidKeyException {
+            this.cipher.init(Cipher.DECRYPT_MODE, this.secretKey, this.ivParameterSpec);
+        }
+
+        public byte[] doFinal() throws BadPaddingException, IllegalBlockSizeException {
+            return this.cipher.doFinal();
+        }
+
+        /**
+         * 单块编码/解码，或结束多块编码/解码
+         *
+         * @param input
+         * @param offset
+         * @param len
+         * @return
+         * @throws BadPaddingException
+         * @throws IllegalBlockSizeException
+         */
+        public byte[] doFinal(byte[] input, int offset, int len) throws BadPaddingException, IllegalBlockSizeException {
+            return this.cipher.doFinal(input, offset, len);
+        }
+
+        /**
+         * 多块编码解码
+         *
+         * @param input
+         * @param offset
+         * @param len
+         * @return
+         */
+        public byte[] update(byte[] input, int offset, int len) {
+            return this.cipher.update(input, offset, len);
+        }
     }
 }
