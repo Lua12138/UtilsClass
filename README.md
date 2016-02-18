@@ -16,3 +16,10 @@ Provide network related operations.
 Class|Description
 :---:|:---:
 HttpRequester.java|Can initiate GET/POST requests without relying on any third party libraries.
+
+## algorithm
+Provide some algorithm.
+
+Class|Description
+:---:|:---:
+SecurityHelper.java|Support MD2/MD5/SHA-1/SHA-224/SHA-256/SHA-384/SHA-512.
