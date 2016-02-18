@@ -22,4 +22,11 @@ Provide some algorithm.
 
 Class|Description
 :---:|:---:
-SecurityHelper.java|Support MD2/MD5/SHA-1/SHA-224/SHA-256/SHA-384/SHA-512/AES128.
+SecurityHelper.java|Support MD2/MD5/SHA-1/SHA-224/SHA-256/SHA-384/SHA-512/AES128 with CBC/ECB.
+
+## convert
+Provide convert between diff type
+
+Class|Description
+:---:|:---:
+StreamConvert.java|convert InputStream/OutputStream, File/String
