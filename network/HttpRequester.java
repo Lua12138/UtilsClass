@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -9,6 +8,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -17,6 +17,49 @@ import java.util.zip.GZIPInputStream;
  * 使用HttpURLConnection包装了常用的GET/POST请求，不依赖第三方库
  */
 public class HttpRequester {
+    public static class HttpResponse {
+        private InputStream response; // 响应正文
+        private int responseCode; // 响应代码
+        private Map<String, List<String>> responseHeaders; // 响应头
+
+        public HttpResponse() {
+            this(true);
+        }
+
+        /**
+         * @param autoInit 是否自动初始化复合对象
+         */
+        public HttpResponse(boolean autoInit) {
+            if (autoInit) {
+                this.responseHeaders = new HashMap<>();
+            }
+        }
+
+        public InputStream getResponse() {
+            return response;
+        }
+
+        public void setResponse(InputStream response) {
+            this.response = response;
+        }
+
+        public int getResponseCode() {
+            return responseCode;
+        }
+
+        public void setResponseCode(int responseCode) {
+            this.responseCode = responseCode;
+        }
+
+        public Map<String, List<String>> getResponseHeaders() {
+            return responseHeaders;
+        }
+
+        public void setResponseHeaders(Map<String, List<String>> responseHeaders) {
+            this.responseHeaders = responseHeaders;
+        }
+    }
+
     private static boolean debug = false;
 
     protected static void log(String pattern, Object... args) {
@@ -93,6 +136,10 @@ public class HttpRequester {
         return inputStream;
     }
 
+    public static InputStream doRequest(URL url, String method, Map<String, String> requestArgs, Map<String, String> requestHeaders) throws IOException {
+        return doRequest(url, method, requestArgs, requestHeaders, true).getResponse();
+    }
+
     /**
      * 发起HTTP请求
      *
@@ -100,10 +147,11 @@ public class HttpRequester {
      * @param method         请求的方法
      * @param requestArgs    请求的参数
      * @param requestHeaders 请求的头
+     * @param autoGzip       自动对GZIP解压缩
      * @return 远程返回的Content，需要手动close
      * @throws IOException
      */
-    public static InputStream doRequest(URL url, String method, Map<String, String> requestArgs, Map<String, String> requestHeaders) throws IOException {
+    public static HttpResponse doRequest(URL url, String method, Map<String, String> requestArgs, Map<String, String> requestHeaders, boolean autoGzip) throws IOException {
         method = method.toUpperCase();
         if (requestArgs == null) requestArgs = new HashMap<>();
         String queryString = mapToQueryString(requestArgs);
@@ -148,16 +196,24 @@ public class HttpRequester {
 
         httpConnection.connect(); // connect to remote
 
+        HttpResponse result = new HttpResponse(false);
+
+        result.setResponseHeaders(httpConnection.getHeaderFields());
+
         int responseCode = httpConnection.getResponseCode();
 
+        result.setResponseCode(responseCode);
         log("Request Method -> %s", httpConnection.getRequestMethod());
         log("Response Code -> %d", responseCode);
 
-        if (httpConnection.getContentEncoding() != null && httpConnection.getContentEncoding().toLowerCase().equals("gzip"))
-            return new GZIPInputStream(httpConnection.getInputStream());
-        else
-            return httpConnection.getInputStream();
-        //InputStream inputStream = httpConnection.getInputStream();
-        //return inputStream;
+        result.setResponse(httpConnection.getInputStream());
+        if (autoGzip) {
+            if (httpConnection.getContentEncoding() != null && httpConnection.getContentEncoding().toLowerCase().equals("gzip"))
+                result.setResponse(new GZIPInputStream(httpConnection.getInputStream()));
+            else
+                result.setResponse(httpConnection.getInputStream());
+        } else
+            result.setResponse(httpConnection.getInputStream());
+        return result;
     }
 }
