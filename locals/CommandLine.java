@@ -46,7 +46,7 @@ public class CommandLine {
             }
             Process process = Runtime.getRuntime().exec(command);
             // 启动两个线程读取输入流与错误输入流，防止程序死锁
-            Thread threadInfo = new Thread(() -> readStream(process.getErrorStream(), builderInfo));
+            Thread threadInfo = new Thread(() -> readStream(process.getInputStream(), builderInfo));
             // 读取错误信息
             Thread threadErr = new Thread(() -> readStream(process.getErrorStream(), builderErr));
             threadInfo.start();
