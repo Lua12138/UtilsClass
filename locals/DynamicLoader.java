@@ -21,6 +21,21 @@ import java.util.Map;
  */
 public class DynamicLoader {
     /**
+     * auto fill in the java-name with code, return null if cannot find the public class
+     * @param javaSrc source code string
+     * @return return the Map, the KEY means ClassName, the VALUE means bytecode.
+     */
+    public static Map<String, byte[]> compile(String javaSrc) {
+        Pattern pattern = Pattern.compile("public\\s+class\\s+(\\w+)");
+
+        Matcher matcher = pattern.matcher(javaSrc);
+
+        if (matcher.find())
+            return compile(matcher.group(1) + ".java", javaSrc);
+        return null;
+    }
+    
+    /**
      * @param javaName the name of your public class,eg: <code>TestClass.java</code>
      * @param javaSrc source code string
      * @return return the Map, the KEY means ClassName, the VALUE means bytecode.
