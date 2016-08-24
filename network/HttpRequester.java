@@ -60,6 +60,34 @@ public class HttpRequester {
         }
     }
 
+    public static class HttpInputStream extends java.io.InputStream {
+        private java.io.InputStream is;
+
+        private HttpInputStream(java.io.InputStream is) {
+            this.is = is;
+        }
+
+        @Override
+        public int read() throws IOException {
+            return this.is.read();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            byte[] bytes = new byte[4096];
+            int len;
+            try {
+                while (-1 != (len = this.is.read(bytes, 0, bytes.length)))
+                    builder.append(new String(bytes, 0, len));
+                return builder.toString();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
     private static boolean debug = false;
 
     protected static void log(String pattern, Object... args) {
@@ -210,9 +238,9 @@ public class HttpRequester {
             result.setResponse(httpConnection.getInputStream());
             if (autoGzip) {
                 if (httpConnection.getContentEncoding() != null && httpConnection.getContentEncoding().toLowerCase().equals("gzip"))
-                    result.setResponse(new GZIPInputStream(httpConnection.getInputStream()));
+                    result.setResponse(new HttpInputStream(new GZIPInputStream(httpConnection.getInputStream())));
                 else
-                    result.setResponse(httpConnection.getInputStream());
+                    result.setResponse(new HttpInputStream(httpConnection.getInputStream()));
             } else
                 result.setResponse(httpConnection.getInputStream());
         }
