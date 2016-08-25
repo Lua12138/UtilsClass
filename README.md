@@ -15,7 +15,8 @@ Provide network related operations.
 
 Class|Description
 :---:|:---:
-HttpRequester.java|Can initiate GET/POST requests without relying on any third party libraries.
+HttpRequester.java|Does not rely on the third party run library, you can initiate a HTTP request, support for Cookie automatic management and thread isolation.
+HttpRequesterTestCase.java|The JUnit test case of HttpRequester
 
 ## algorithm
 Provide some algorithm.
