@@ -2,10 +2,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -14,6 +11,8 @@ import java.util.zip.GZIPInputStream;
 
 /**
  * Created by forDream on 2016-01-13.<br/>
+ * Last Update on 2016-08-25 <br/>
+ * Need JDK >= 1.6 <br/>
  * 使用HttpURLConnection包装了常用的GET/POST请求，不依赖第三方库
  */
 public class HttpRequester {
@@ -31,7 +30,7 @@ public class HttpRequester {
          */
         public HttpResponse(boolean autoInit) {
             if (autoInit) {
-                this.responseHeaders = new HashMap<>();
+                this.responseHeaders = new HashMap();
             }
         }
 
@@ -88,14 +87,83 @@ public class HttpRequester {
         }
     }
 
-    private static boolean debug = false;
+    public static class MyAsynCookieManager extends CookieManager {
+        private static MyAsynCookieManager cookieManager;
+        private Map<Thread, CookieManager> cookies;
 
-    protected static void log(String pattern, Object... args) {
+        private MyAsynCookieManager() {
+            this.cookies = new HashMap<Thread, CookieManager>();
+        }
+
+        private CookieManager currentThreadCookieManager() {
+            CookieManager cookieManager = this.cookies.get(Thread.currentThread());
+            if (cookieManager == null) {
+                cookieManager = new CookieManager();
+                this.cookies.put(Thread.currentThread(), cookieManager);
+            }
+            return cookieManager;
+        }
+
+        public static MyAsynCookieManager getManager() {
+            if (cookieManager == null)
+                synchronized (MyAsynCookieManager.class) {
+                    if (cookieManager == null) cookieManager = new MyAsynCookieManager();
+                }
+
+            return cookieManager;
+        }
+
+        @Override
+        public Map<String, List<String>> get(URI uri, Map<String, List<String>> requestHeaders) throws IOException {
+            return this.currentThreadCookieManager().get(uri, requestHeaders);
+        }
+
+        @Override
+        public void put(URI uri, Map<String, List<String>> responseHeaders) throws IOException {
+            this.currentThreadCookieManager().put(uri, responseHeaders);
+        }
+    }
+
+    private static HttpRequester singleton;
+
+    static {
+        singleton = new HttpRequester();
+    }
+
+    public static HttpRequester getSingleton() {
+        return singleton;
+    }
+
+    /**
+     * default is no Cookies Support.
+     *
+     * @return
+     */
+    public static HttpRequester newInstance() {
+        return new HttpRequester();
+    }
+
+    /**
+     * Global setting
+     *
+     * @param bool
+     */
+    public static void setThreadCookiesEnabled(boolean bool) {
+        CookieHandler.setDefault(bool ? MyAsynCookieManager.getManager() : null);
+    }
+
+
+    private HttpRequester() {
+    }
+
+    private boolean debug = false;
+
+    protected void log(String pattern, Object... args) {
         if (debug)
             System.out.println(String.format(pattern, args));
     }
 
-    public static synchronized void putTraceInfo(boolean put) {
+    public synchronized void putTraceInfo(boolean put) {
         debug = put;
     }
 
@@ -122,7 +190,7 @@ public class HttpRequester {
      * @return
      */
     private static Map<String, String> queryStringToMap(String queryString) {
-        Map<String, String> map = new HashMap<>();
+        Map<String, String> map = new HashMap();
         String[] queries = queryString.split("&");
         for (String query : queries) {
             int offset = query.indexOf('=');
@@ -145,7 +213,7 @@ public class HttpRequester {
      * @return 服务器返回的输入流
      * @throws IOException
      */
-    public static InputStream doGet(URL url, Map<String, String> requestArgs, Map<String, String> requestHeaders) throws IOException {
+    public InputStream doGet(URL url, Map<String, String> requestArgs, Map<String, String> requestHeaders) throws IOException {
         InputStream inputStream = doRequest(url, "GET", requestArgs, requestHeaders);
         return inputStream;
     }
@@ -159,12 +227,12 @@ public class HttpRequester {
      * @return 服务器返回的输入流
      * @throws IOException
      */
-    public static InputStream doPost(URL url, Map<String, String> requestArgs, Map<String, String> requestHeaders) throws IOException {
+    public InputStream doPost(URL url, Map<String, String> requestArgs, Map<String, String> requestHeaders) throws IOException {
         InputStream inputStream = doRequest(url, "POST", requestArgs, requestHeaders);
         return inputStream;
     }
 
-    public static InputStream doRequest(URL url, String method, Map<String, String> requestArgs, Map<String, String> requestHeaders) throws IOException {
+    public InputStream doRequest(URL url, String method, Map<String, String> requestArgs, Map<String, String> requestHeaders) throws IOException {
         return doRequest(url, method, requestArgs, requestHeaders, true).getResponse();
     }
 
@@ -179,9 +247,9 @@ public class HttpRequester {
      * @return 远程返回的Content，需要手动close
      * @throws IOException
      */
-    public static HttpResponse doRequest(URL url, String method, Map<String, String> requestArgs, Map<String, String> requestHeaders, boolean autoGzip) throws IOException {
+    public HttpResponse doRequest(URL url, String method, Map<String, String> requestArgs, Map<String, String> requestHeaders, boolean autoGzip) throws IOException {
         method = method.toUpperCase();
-        if (requestArgs == null) requestArgs = new HashMap<>();
+        if (requestArgs == null) requestArgs = new HashMap();
         String queryString = mapToQueryString(requestArgs);
         // add args to uri
         if (!method.matches("(?:POST|PUT)")) {
@@ -202,7 +270,7 @@ public class HttpRequester {
         log("Request URL -> %s", url.toString());
 
         if (requestHeaders == null)
-            requestHeaders = new HashMap<>();
+            requestHeaders = new HashMap();
         requestHeaders.put("X-Connector", "forDream");
 
         // set http request headers
