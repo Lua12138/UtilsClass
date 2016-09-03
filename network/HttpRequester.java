@@ -11,7 +11,7 @@ import java.util.zip.GZIPInputStream;
 
 /**
  * Created by forDream on 2016-01-13.<br/>
- * Last Update on 2016-08-25 <br/>
+ * Last edit on 2016-09-03 <br/>
  * Need JDK >= 1.6 <br/>
  * 使用HttpURLConnection包装了常用的GET/POST请求，不依赖第三方库
  */
@@ -61,9 +61,11 @@ public class HttpRequester {
 
     public static class HttpInputStream extends java.io.InputStream {
         private java.io.InputStream is;
+        private String toString;
 
         private HttpInputStream(java.io.InputStream is) {
             this.is = is;
+            this.toString = null;
         }
 
         @Override
@@ -73,17 +75,19 @@ public class HttpRequester {
 
         @Override
         public String toString() {
-            StringBuilder builder = new StringBuilder();
-            byte[] bytes = new byte[4096];
-            int len;
-            try {
-                while (-1 != (len = this.is.read(bytes, 0, bytes.length)))
-                    builder.append(new String(bytes, 0, len));
-                return builder.toString();
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (this.toString == null) {
+                StringBuilder builder = new StringBuilder();
+                byte[] bytes = new byte[4096];
+                int len;
+                try {
+                    while (-1 != (len = this.is.read(bytes, 0, bytes.length)))
+                        builder.append(new String(bytes, 0, len));
+                    this.toString = builder.toString();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-            return null;
+            return this.toString;
         }
     }
 
@@ -95,13 +99,21 @@ public class HttpRequester {
             this.cookies = new HashMap<Thread, CookieManager>();
         }
 
-        private CookieManager currentThreadCookieManager() {
+        public CookieManager currentThreadCookieManager() {
             CookieManager cookieManager = this.cookies.get(Thread.currentThread());
             if (cookieManager == null) {
                 cookieManager = new CookieManager();
                 this.cookies.put(Thread.currentThread(), cookieManager);
             }
             return cookieManager;
+        }
+
+        public void cleanCurrentThreadCookieManager() {
+            this.cookies.put(Thread.currentThread(), null);
+        }
+
+        public void cleanAllCookieManager() {
+            this.cookies.clear();
         }
 
         public static MyAsynCookieManager getManager() {
@@ -152,6 +164,13 @@ public class HttpRequester {
         CookieHandler.setDefault(bool ? MyAsynCookieManager.getManager() : null);
     }
 
+    public void cleanCurrentCookies() {
+        MyAsynCookieManager.getManager().cleanCurrentThreadCookieManager();
+    }
+
+    public void cleanAllCookies() {
+        MyAsynCookieManager.getManager().cleanAllCookieManager();
+    }
 
     private HttpRequester() {
     }
@@ -232,8 +251,13 @@ public class HttpRequester {
         return inputStream;
     }
 
+    /**
+     * 使用默认的设置，无代理，10秒连接和读取超时
+     *
+     * @throws IOException
+     */
     public InputStream doRequest(URL url, String method, Map<String, String> requestArgs, Map<String, String> requestHeaders) throws IOException {
-        return doRequest(url, method, requestArgs, requestHeaders, true).getResponse();
+        return doRequest(url, method, requestArgs, requestHeaders, 10000, 10000, null, true).getResponse();
     }
 
     /**
@@ -243,11 +267,14 @@ public class HttpRequester {
      * @param method         请求的方法
      * @param requestArgs    请求的参数
      * @param requestHeaders 请求的头
+     * @param connectTimeout 连接超时
+     * @param readTimeout    读取超时
+     * @param proxy          代理服务器
      * @param autoGzip       自动对GZIP解压缩
      * @return 远程返回的Content，需要手动close
      * @throws IOException
      */
-    public HttpResponse doRequest(URL url, String method, Map<String, String> requestArgs, Map<String, String> requestHeaders, boolean autoGzip) throws IOException {
+    public HttpResponse doRequest(URL url, String method, Map<String, String> requestArgs, Map<String, String> requestHeaders, int connectTimeout, int readTimeout, Proxy proxy, boolean autoGzip) throws IOException {
         method = method.toUpperCase();
         if (requestArgs == null) requestArgs = new HashMap();
         String queryString = mapToQueryString(requestArgs);
@@ -264,7 +291,15 @@ public class HttpRequester {
             queryString = null;
         }
 
-        URLConnection connection = url.openConnection();
+        URLConnection connection;
+        if (proxy == null)
+            connection = url.openConnection();
+        else
+            connection = url.openConnection(proxy);
+
+        connection.setConnectTimeout(connectTimeout);
+        connection.setReadTimeout(readTimeout);
+
         HttpURLConnection httpConnection = (HttpURLConnection) connection;
 
         log("Request URL -> %s", url.toString());
