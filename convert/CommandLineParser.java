@@ -1,7 +1,3 @@
-/**
- * Created by forDream on 2016/11/1.
- */
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -17,10 +13,10 @@ import java.util.regex.Pattern;
 ///////////////////////////////
 //    @Test
 //    public void CommandLineParserTest() {
-//        CommandLineParser parser = new CommandLineParser(new String[]{"-h", "needHelp", "-x", "Data", "-s", "NeedStop","dsfsd" ,"-x" ,"xxxxx", "-a"});
+//        CommandLineParser parser = new CommandLineParser(new String[]{"-h", "needHelp", "-x", "Data1", "    Data2        ", "Data3", "-s", "NeedStop", "dsfsd", "xxxxx", "-a"});
 //        parser.addHandler("h", "There is no helpful.", true) // 一般测试
-//                .addHandler("x", parameter -> { //处理器测试
-//                    System.err.println("Receive -> " + parameter);
+//                .addHandler("x", templateParameters -> { //处理器测试
+//                    Arrays.stream(templateParameters).forEach(System.err::println);
 //                    return true;
 //                })
 //                .addHandler("s", "Yes, I'm trying stop", false) // 终止判断测试
@@ -38,11 +34,11 @@ public class CommandLineParser {
          * @param parameter 接收到的命令行参数
          * @return 是否继续处理其他参数
          */
-        boolean doHandler(String parameter);
+        boolean doHandler(String[] parameter);
     }
 
     private String[] args;
-    private PriorityQueue<Map<String, Object>> parameters;
+    private PriorityQueue<Map<String, Object>> templateParameters;
     private final String priorityIndexKey = "priorityIndexKey";
     private final String priorityParameterKey = "priorityParameterKey";
     private final String priorityHandlerKey = "priorityHandlerKey";
@@ -54,7 +50,7 @@ public class CommandLineParser {
      */
     public CommandLineParser(String[] args) {
         this.args = args;
-        this.parameters = new PriorityQueue<>((o1, o2) -> (int) o1.get(priorityIndexKey) - (int) o2.get(priorityIndexKey));
+        this.templateParameters = new PriorityQueue<>((o1, o2) -> (int) o1.get(priorityIndexKey) - (int) o2.get(priorityIndexKey));
     }
 
     /**
@@ -114,7 +110,7 @@ public class CommandLineParser {
         p.put(this.priorityParameterKey, parameter);
         p.put(this.priorityHandlerKey, handler);
         p.put(this.priorityGoOnKey, goOn);
-        this.parameters.add(p);
+        this.templateParameters.add(p);
         return this;
     }
 
@@ -124,30 +120,29 @@ public class CommandLineParser {
      * @return 解析链是否全部完成，任何一个解析结果为false，则返回false
      */
     public boolean parse() {
-        Pattern pattern = Pattern.compile("-(\\S+)($|\\s+(\\S+|$))");
+        Pattern pattern = Pattern.compile("-(\\S+)(\\s+(.*?)(?=\\s-\\S|$))");
+        Map<String, String[]> actualParameter = new HashMap<>();
+        Matcher matcher = pattern.matcher(String.join(" ", this.args));
+        while (matcher.find()) {
+            actualParameter.put(matcher.group(1), matcher.group(3).split("\\s+"));
+        }
 
-        while (null != this.parameters.peek()) {
-            Matcher matcher = pattern.matcher(String.join(" ", this.args));
-            Map<String, Object> map = this.parameters.poll();
-            while (matcher.find()) {
-                String parameterName = matcher.group(1);
-                String parameterValue = matcher.group(3);
+        while (null != this.templateParameters.peek()) {
+            Map<String, Object> templateParameter = this.templateParameters.poll();
 
-                String parameter = (String) map.get(CommandLineParser.this.priorityParameterKey);
-                if (parameterName.equals(parameter)) {
-                    Object handler = map.get(CommandLineParser.this.priorityHandlerKey);
+                String parameter = (String) templateParameter.get(CommandLineParser.this.priorityParameterKey);
+                if (actualParameter.get(parameter) != null) {
+                    Object handler = templateParameter.get(CommandLineParser.this.priorityHandlerKey);
                     if (handler instanceof String) {
                         System.err.println((String) handler);
-                        boolean goOn = (boolean) map.get(this.priorityGoOnKey);
+                        boolean goOn = (boolean) templateParameter.get(this.priorityGoOnKey);
                         if (!goOn) return false;
                     } else if (handler instanceof ParameterHandler) {
-                        if (!((ParameterHandler) handler).doHandler(parameterValue)) return false;
+                        if (!((ParameterHandler) handler).doHandler(actualParameter.get(parameter))) return false;
                     } else {
                         throw new RuntimeException("Unknow CommandLine Handler.");
                     }
-                    break;
                 }
-            }
         }
         return true;
     }
