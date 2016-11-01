@@ -9,6 +9,7 @@ Provide the operating system related classes.
 Class|Description
 :---:|:---:
 CommandLine.java|Execute command line.
+DynamicLoader.java|Dynamically compile, load, and execute the Java source file
 
 ## network
 Provide network related operations.
@@ -31,3 +32,4 @@ Provide convert between diff type
 Class|Description
 :---:|:---:
 StreamConvert.java|convert InputStream/OutputStream, File/String
+CommandLineParser.java|Help parse command line arguments
