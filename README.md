@@ -10,6 +10,8 @@ Class|Description
 :---:|:---:
 CommandLine.java|Execute command line.
 DynamicLoader.java|Dynamically compile, load, and execute the Java source file
+JdepsHelper.java|Dependency analysis of jdeps based on JDK8
+JdepsTestCase.java|JUnit unit test class and guidelines.
 
 ## network
 Provide network related operations.
