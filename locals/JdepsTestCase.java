@@ -16,15 +16,27 @@ public class JdepsTestCase {
             if (toolsJar.exists()) {
                 try {
                     Method addURL = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-                    addURL.setAccessible(true);
+                    Method findClass = URLClassLoader.class.getDeclaredMethod("findClass", String.class);
                     URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-                    addURL.invoke(classLoader, toolsJar.toURI().toURL());
-                    System.err.println("Automatic loading dependent library success.");
+                    addURL.setAccessible(true);
+                    findClass.setAccessible(true);
+                    try {
+                        findClass.invoke(classLoader, "com.sun.tools.jdeps.JdepsTask");
+                        System.err.println("Tools.jar has been loaded, do not need to load again.");
+                    } catch (InvocationTargetException e) {
+                        if (e.getTargetException() instanceof ClassNotFoundException) {
+                            addURL.invoke(classLoader, toolsJar.toURI().toURL());
+                            System.err.println("Automatic loading dependent library success.");
+                        }else{
+                            System.err.println("There is an error.");
+                            e.printStackTrace();
+                        }
+                    }
                 } catch (MalformedURLException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
                     e.printStackTrace();
                 }
             } else {
-                System.err.println("Unable to load library automatically because the tools.jar is not found.");
+                System.err.println("Unable to load library automatically because the tools.jar is not found.\n");
             }
         } else {
             System.err.println("Unable to load library automatically because JAVA_HOME is not found.");
