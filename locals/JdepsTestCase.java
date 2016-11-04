@@ -7,7 +7,29 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class JdepsTestCase {
-
+    // If tools.jar has been in classpath, do not need this code
+    // This code must be executed before the JdepsHelper class is loaded, otherwise invalid.
+    static { // Auto load tools.jar in boot
+        String javahome = System.getenv("JAVA_HOME");
+        if (javahome != null) {
+            File toolsJar = new File(javahome + "/lib/tools.jar");
+            if (toolsJar.exists()) {
+                try {
+                    Method addURL = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+                    addURL.setAccessible(true);
+                    URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+                    addURL.invoke(classLoader, toolsJar.toURI().toURL());
+                    System.err.println("Automatic loading dependent library success.");
+                } catch (MalformedURLException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.err.println("Unable to load library automatically because the tools.jar is not found.");
+            }
+        } else {
+            System.err.println("Unable to load library automatically because JAVA_HOME is not found.");
+        }
+    }
 
     protected File[] getClasspath(File baseFile) {
         final String baseUrl = "C:\\modules-2\\";
