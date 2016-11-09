@@ -1,9 +1,11 @@
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ForkJoinPool;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -70,8 +72,19 @@ public class Spider {
     private int connectTimeout;
     private int readTimeout;
 
+    private static ForkJoinPool forkJoinPool;
+
+    static {
+        forkJoinPool = new ForkJoinPool();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> forkJoinPool.shutdown()));
+    }
+
     public static Spider newHost(URL host) {
         return new Spider(host);
+    }
+
+    public static Spider newHost(String host) throws MalformedURLException {
+        return newHost(new URL(host));
     }
 
     private Spider(URL host) {
@@ -106,6 +119,10 @@ public class Spider {
     public Spider changeHost(URL host) {
         this.host = host;
         return this;
+    }
+
+    public Spider changeHost(String host) throws MalformedURLException {
+        return this.changeHost(new URL(host));
     }
 
     /**
@@ -190,7 +207,7 @@ public class Spider {
 
     public Spider request(String method, RequestHandler handler) throws IOException {
         if (this.isAsyn())
-            new InnerThread(() -> this.request0(method, handler)).start();
+            forkJoinPool.submit(() -> Spider.this.request0(method, handler));
         else
             return this.request0(method, handler);
         return this;
