@@ -36,3 +36,11 @@ Class|Description
 :---:|:---:
 StreamConvert.java|convert InputStream/OutputStream, File/String
 CommandLineParser.java|Help parse command line arguments
+
+## assistant
+Encapsulate some of the commonly used classes.
+
+Class|Description
+:---:|:---:
+Regex.java|Operation method similar to Stream.
+RegexTest.java|JUnit of Regex.java
