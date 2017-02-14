@@ -67,6 +67,72 @@ public class BitOperate {
     public static final long BIT_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000010 = 0x0000000000000002L;
     public static final long BIT_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000001 = 0x0000000000000001L;
 
+    //////
+
+    public static final int BIT_10000000_00000000_00000000_00000000 = 0x80000000;
+    public static final int BIT_01000000_00000000_00000000_00000000 = 0x40000000;
+    public static final int BIT_00100000_00000000_00000000_00000000 = 0x20000000;
+    public static final int BIT_00010000_00000000_00000000_00000000 = 0x10000000;
+    public static final int BIT_00001000_00000000_00000000_00000000 = 0x08000000;
+    public static final int BIT_00000100_00000000_00000000_00000000 = 0x04000000;
+    public static final int BIT_00000010_00000000_00000000_00000000 = 0x02000000;
+    public static final int BIT_00000001_00000000_00000000_00000000 = 0x01000000;
+    public static final int BIT_00000000_10000000_00000000_00000000 = 0x00800000;
+    public static final int BIT_00000000_01000000_00000000_00000000 = 0x00400000;
+    public static final int BIT_00000000_00100000_00000000_00000000 = 0x00200000;
+    public static final int BIT_00000000_00010000_00000000_00000000 = 0x00100000;
+    public static final int BIT_00000000_00001000_00000000_00000000 = 0x00080000;
+    public static final int BIT_00000000_00000100_00000000_00000000 = 0x00040000;
+    public static final int BIT_00000000_00000010_00000000_00000000 = 0x00020000;
+    public static final int BIT_00000000_00000001_00000000_00000000 = 0x00010000;
+    public static final int BIT_00000000_00000000_10000000_00000000 = 0x00008000;
+    public static final int BIT_00000000_00000000_01000000_00000000 = 0x00004000;
+    public static final int BIT_00000000_00000000_00100000_00000000 = 0x00002000;
+    public static final int BIT_00000000_00000000_00010000_00000000 = 0x00001000;
+    public static final int BIT_00000000_00000000_00001000_00000000 = 0x00000800;
+    public static final int BIT_00000000_00000000_00000100_00000000 = 0x00000400;
+    public static final int BIT_00000000_00000000_00000010_00000000 = 0x00000200;
+    public static final int BIT_00000000_00000000_00000001_00000000 = 0x00000100;
+    public static final int BIT_00000000_00000000_00000000_10000000 = 0x00000080;
+    public static final int BIT_00000000_00000000_00000000_01000000 = 0x00000040;
+    public static final int BIT_00000000_00000000_00000000_00100000 = 0x00000020;
+    public static final int BIT_00000000_00000000_00000000_00010000 = 0x00000010;
+    public static final int BIT_00000000_00000000_00000000_00001000 = 0x00000008;
+    public static final int BIT_00000000_00000000_00000000_00000100 = 0x00000004;
+    public static final int BIT_00000000_00000000_00000000_00000010 = 0x00000002;
+    public static final int BIT_00000000_00000000_00000000_00000001 = 0x00000001;
+
+    //////
+
+    public static final short BIT_1000_0000_0000_0000 = (short) 0x8000;
+    public static final short BIT_0100_0000_0000_0000 = 0x4000;
+    public static final short BIT_0010_0000_0000_0000 = 0x2000;
+    public static final short BIT_0001_0000_0000_0000 = 0x1000;
+    public static final short BIT_0000_1000_0000_0000 = 0x0800;
+    public static final short BIT_0000_0100_0000_0000 = 0x0400;
+    public static final short BIT_0000_0010_0000_0000 = 0x0200;
+    public static final short BIT_0000_0001_0000_0000 = 0x0100;
+    public static final short BIT_0000_0000_1000_0000 = 0x0080;
+    public static final short BIT_0000_0000_0100_0000 = 0x0040;
+    public static final short BIT_0000_0000_0010_0000 = 0x0020;
+    public static final short BIT_0000_0000_0001_0000 = 0x0010;
+    public static final short BIT_0000_0000_0000_1000 = 0x0008;
+    public static final short BIT_0000_0000_0000_0100 = 0x0004;
+    public static final short BIT_0000_0000_0000_0010 = 0x0002;
+    public static final short BIT_0000_0000_0000_0001 = 0x0001;
+
+
+    //////
+
+    public static final byte BIT_1000_0000 = (byte) 0x0080;
+    public static final byte BIT_0100_0000 = 0x0040;
+    public static final byte BIT_0010_0000 = 0x0020;
+    public static final byte BIT_0001_0000 = 0x0010;
+    public static final byte BIT_0000_1000 = 0x0008;
+    public static final byte BIT_0000_0100 = 0x0004;
+    public static final byte BIT_0000_0010 = 0x0002;
+    public static final byte BIT_0000_0001 = 0x0001;
+
 
     public static boolean test(long src, long bit) {
         return bit == (src & bit);
@@ -115,32 +181,32 @@ public class BitOperate {
     public static byte clean(byte src, byte bit) {
         return (byte) ((~bit | src) & 0xFF);
     }
-    
-    protected static void outHex(long n) {
-        String s = Long.toHexString(n);
-        int k = 16 - s.length();
-        while (k-- > 0)
-            System.err.print('0');
-        System.err.print(s);
-    }
 
-    public static void main(String[] args) {
-        // Build Bit Field
-        final char[] str1 = "public static final long BIT_".toCharArray();
-        final char[] str2 = new char[64];
-        final char[] str3 = "=0x".toCharArray();
-        for (int i = 0; i < 64; i++) {
-            Arrays.fill(str2, '0');
-            str2[i] = '1';
-            System.err.print(str1);
-            for (int j = 0; j < str2.length; j++) {
-                if (j > 0 && j % 8 == 0)
-                    System.err.print('_');
-                System.err.print(str2[j]);
-            }
-            System.err.print(str3);
-            outHex((long) 1 << (63 - i));
-            System.err.println("L;");
-        }
-    }
+	protected static void outHex(long n) {
+		String s = Long.toHexString(n);
+		int k = 16 - s.length();
+		while (k-- > 0)
+			System.err.print('0');
+		System.err.print(s);
+	}
+
+	public static void main(String[] args) {
+		// Build Bit Field
+		final char[] str1 = "public static final long BIT_".toCharArray();
+		final char[] str2 = new char[64];
+		final char[] str3 = "=0x".toCharArray();
+		for (int i = 0; i < str2.length; i++) {
+			Arrays.fill(str2, '0');
+			str2[i] = '1';
+			System.err.print(str1);
+			for (int j = 0; j < str2.length; j++) {
+				if (j > 0 && j % 4 == 0)
+					System.err.print('_');
+				System.err.print(str2[j]);
+			}
+			System.err.print(str3);
+			outHex((long) 1 << (str2.length - 1 - i));
+			System.err.println(";");
+		}
+	}
 }
