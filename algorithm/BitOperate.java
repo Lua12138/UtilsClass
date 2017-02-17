@@ -167,19 +167,19 @@ public class BitOperate {
     }
 
     public static long clean(long src, long bit) {
-        return ~bit | src;
+        return ~bit & src;
     }
 
     public static int clean(int src, int bit) {
-        return ~bit | src;
+        return (~bit) & src;
     }
 
     public static short clean(short src, short bit) {
-        return (short) ((~bit | src) & 0xFFFF);
+        return (short) ((~bit & src) & 0xFFFF);
     }
 
     public static byte clean(byte src, byte bit) {
-        return (byte) ((~bit | src) & 0xFF);
+        return (byte) ((~bit & src) & 0xFF);
     }
 
 	protected static void outHex(long n) {
