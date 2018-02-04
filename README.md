@@ -51,3 +51,4 @@ Some extension method of Kotlin.
 Class|Description
 :---:|:---:
 serialize.kt|Some method of serialize & deserialize.
+io.kt|Some method of IO
