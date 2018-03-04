@@ -52,3 +52,4 @@ Class|Description
 :---:|:---:
 serialize.kt|Some method of serialize & deserialize.
 io.kt|Some method of IO
+ChineseIdentityCard.kt|Which is use for verifying that validity of the Chinese identity card
