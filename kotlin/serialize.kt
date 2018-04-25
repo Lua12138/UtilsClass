@@ -30,3 +30,11 @@ fun Any.toJsonString(): String =
  */
 fun <T> String.toJsonObject(targetClass: Class<out T>): T =
         Gson().fromJson<T>(this, targetClass)
+
+fun <T> String.toJsonObject(targetType: Class<out T>, exclusionStrategy: ExclusionStrategy): T =
+        GsonBuilder().setExclusionStrategies(exclusionStrategy)
+                .create()
+                .fromJson(this, targetType)
+
+fun <T> String.toJsonGenericsObject() =
+        Gson().fromJson<T>(this, object : TypeToken<T>() {}.type)
