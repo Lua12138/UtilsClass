@@ -1,4 +1,16 @@
 /**
+ * get the `Class` of string exp
+ * @param classLoader load the class which `ClassLoader` will be used. null for defaults
+ */
+fun <T> String.toClassObject(classLoader: ClassLoader? = null): Class<T> {
+    return if (classLoader == null) {
+        Class.forName(this)
+    } else {
+        classLoader.loadClass(this)
+    } as Class<T>
+}
+
+/**
  * create an instance of the `Class`
  * @param argsTypes the type lists for constructor, put empty array if there is no params
  * @param argsValues the value lists for constructor, put empty array if there is no params
