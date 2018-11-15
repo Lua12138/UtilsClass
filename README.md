@@ -54,3 +54,4 @@ serialize.kt|Some method of serialize & deserialize.
 io.kt|Some method of IO
 ChineseIdentityCard.kt|Which is use for verifying that validity of the Chinese identity card
 ReflectionHelper.kt|Some method to help use reflect
+RawAndroidManifestParser.kt|Parsing Android Manifest. XML File by XML Syntax
