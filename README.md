@@ -21,6 +21,7 @@ Class|Description
 HttpRequester.java|Does not rely on the third party run library, you can initiate a HTTP request, support for Cookie automatic management and thread isolation.
 HttpRequesterTestCase.java|The JUnit test case of HttpRequester
 Spider.java|The helper of HttpRequester.java to provide chain programming.
+ServerChanNotification.kt|A helper of [ServerChan(Server酱)][ServerChan]
 
 ## algorithm
 Provide some algorithm.
@@ -55,3 +56,5 @@ io.kt|Some method of IO
 ChineseIdentityCard.kt|Which is use for verifying that validity of the Chinese identity card
 ReflectionHelper.kt|Some method to help use reflect
 RawAndroidManifestParser.kt|Parsing Android Manifest. XML File by XML Syntax
+
+[ServerChan]:https://sc.ftqq.com
