@@ -51,12 +51,18 @@
         console.log('trace:', symbols)
     }
 
-    function findMethod(methods, name) {
-        for (var n in methods) {
-            var method = methods[n]
-            if (method.indexOf(name) > 0) {
-                console.log('Method is:', method)
+    function findMethod(className, name) {
+        eachMethod(className, function (methodName) {
+            if (methodName.indexOf(name) !== -1) {
+                console.log('Method is:', methodName)
             }
+        })
+    }
+
+    function eachMethod(className, callback) {
+        var methods = ObjC.classes[className].$methods
+        for (var n in methods) {
+            callback(methods[n])
         }
     }
 
