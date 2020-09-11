@@ -29,6 +29,7 @@ if __name__ == '__main__':
 
     cf_base_url = 'https://api.cloudflare.com/client/v4'
 
+    # Ignore loopback addresses and LAN reserved addresses
     blacklist = [
         '^fe80',
         '^fd19',
