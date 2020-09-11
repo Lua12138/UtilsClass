@@ -5,8 +5,16 @@ import socket
 import requests
 import json
 import argparse
+import os
+import re
 
 if __name__ == '__main__':
+    """
+    The following DNS records will be created
+        <prefix>-v4.<domain> for IPv4
+        <prefix>-v6.<domain> for IPv6
+    IP address depends on the result of ifconfig command
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--domain', required=True, help='which means zone in cloudflare. eg: example.com')
     parser.add_argument('--prefix', required=True, help='which means prefix of DDNS')
@@ -22,32 +30,35 @@ if __name__ == '__main__':
     cf_base_url = 'https://api.cloudflare.com/client/v4'
 
     blacklist = [
-        'fe80',
-        '192.168',
-        '172.17'
+        '^fe80',
+        '^fd19',
+        '^::',
+        '^127',
+        '^192',
+        '^172',
+        '^10\.'
     ]
 
-    address = socket.getaddrinfo(socket.gethostname(), None)
-
+    # address = socket.getaddrinfo(socket.gethostname(), None)
+    ifconfig = os.popen("ifconfig -a").read()
+    address = re.findall('addr:\s*([0-9a-f.:]+)', ifconfig)
     ipv4 = []
     ipv6 = []
     for addr in address:
-        ip = addr[4][0]
         flag = True
         for b in blacklist:
-            if ip.startswith(b):
+            if re.search(b, addr):
                 flag = False
 
         if not flag:
             continue
-        if addr[0] == socket.AddressFamily.AF_INET6:
-            print('IPv6:', ip)
-            ipv6.append(ip)
-        elif addr[0] == socket.AddressFamily.AF_INET:
-            print('IPv4:', ip)
-            ipv4.append(ip)
+
+        if addr.__contains__(':'):
+            print('IPv6:"%s"' % addr)
+            ipv6.append(addr)
         else:
-            print('un-support address:', addr)
+            print('IPv4:"%s"' % addr)
+            ipv4.append(addr)
 
     headers = {
         'Authorization': 'Bearer %s' % cf_api_key,
@@ -61,8 +72,12 @@ if __name__ == '__main__':
     zone_id = zones['result'][0]['id']
     print('find zone id %s for %s' % (zone_id, domain))
     dns_records = requests.get('%s/zones/%s/dns_records' % (cf_base_url, zone_id),
+                               params={
+                                   'per_page': '100',
+                                   'proxied': False
+                               },
                                headers=headers).json()
-
+    # print('raw list:', dns_records)
     for record in dns_records['result']:
         dns_id = record['id']
         name = record['name']
@@ -72,9 +87,13 @@ if __name__ == '__main__':
             if content not in ipv4 and content not in ipv6:
                 requests.delete('%s/zones/%s/dns_records/%s' % (cf_base_url, zone_id, dns_id),
                                 headers=headers)
-                ipv6.remove(content)
-                ipv4.remove(content)
                 print('delete id(%s) for %s with %s' % (dns_id, name, content))
+            else:
+                print('exist DNS record with id(%s) name(%s) content(%s)' % (dns_id, name, content))
+                if content in ipv6:
+                    ipv6.remove(content)
+                if content in ipv4:
+                    ipv4.remove(content)
 
     create_dns_record = []
     # create new records
@@ -85,7 +104,7 @@ if __name__ == '__main__':
                                 'type': 'A',
                                 'name': '%s-v4.%s' % (dns_base_name, domain),
                                 'content': v4,
-                                'ttl': '2',
+                                'ttl': '120',
                                 'proxied': False
                             })).json()
         create_dns_record.append(ret)
@@ -96,9 +115,9 @@ if __name__ == '__main__':
                                 'type': 'AAAA',
                                 'name': '%s-v6.%s' % (dns_base_name, domain),
                                 'content': v6,
-                                'ttl': '2',
+                                'ttl': '120',
                                 'proxied': False
-                            }))
+                            })).json()
         create_dns_record.append(ret)
 
     for rec in create_dns_record:
@@ -109,6 +128,6 @@ if __name__ == '__main__':
             dns_content = ret['content']
             print('add new record(%s) id(%s)  with content(%s)' % (dns_name, dns_id, dns_content))
         else:
-            print('Error:%s', rec)
+            print('Error:', rec)
 
     print('all done.')
