@@ -29,7 +29,12 @@ if __name__ == '__main__':
 
     cf_base_url = 'https://api.cloudflare.com/client/v4'
 
-    # Ignore loopback addresses and LAN reserved addresses
+    # grep of interface name
+    interface_name = [
+        'wan'
+    ]
+
+    # blacklist of IPs
     blacklist = [
         '^fe80',
         '^fd19',
@@ -40,26 +45,38 @@ if __name__ == '__main__':
         '^10\.'
     ]
 
-    # address = socket.getaddrinfo(socket.gethostname(), None)
     ifconfig = os.popen("ifconfig -a").read()
-    address = re.findall('addr:\s*([0-9a-f.:]+)', ifconfig)
+    interfaces = re.findall('([a-zA-Z0-9_-]+)\s+Link([\w\W]*?)(?:\n\n|$)',ifconfig)
+
     ipv4 = []
     ipv6 = []
-    for addr in address:
-        flag = True
-        for b in blacklist:
-            if re.search(b, addr):
-                flag = False
-
-        if not flag:
+    for inet in interfaces:
+        inet_name = inet[0]
+        to_continue = False
+        for white in interface_name:
+            if re.search(white, inet_name):
+                to_continue = True
+        
+        if not to_continue:
             continue
 
-        if addr.__contains__(':'):
-            print('IPv6:"%s"' % addr)
-            ipv6.append(addr)
-        else:
-            print('IPv4:"%s"' % addr)
-            ipv4.append(addr)
+        address0 = inet[1]
+        address1 = address = re.findall('addr:\s*([0-9a-f.:]+)', address0)
+        for addr in address:
+            to_continue = True
+            for b in blacklist:
+                if re.search(b, addr):
+                    to_continue = False
+            
+            if not to_continue:
+                continue
+
+            if addr.__contains__(':'):
+                print('IPv6(%s) With Interface(%s)' % (addr, inet_name))
+                ipv6.append(addr)
+            else:
+                print('IPv4(%s) With Interface(%s)' % (addr, inet_name))
+                ipv4.append(addr)
 
     headers = {
         'Authorization': 'Bearer %s' % cf_api_key,
@@ -132,3 +149,4 @@ if __name__ == '__main__':
             print('Error:', rec)
 
     print('all done.')
+
